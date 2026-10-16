@@ -31,6 +31,10 @@ function setStatus(message) {
   if (message !== 'Enable the microphone before recording.') return;
   document.querySelector('#mic-warning').hidden = false;
 }
+document.querySelector('#info-button').addEventListener('click', () => { document.querySelector('#info-dialog').hidden = false; });
+document.querySelector('#info-close').addEventListener('click', () => { document.querySelector('#info-dialog').hidden = true; });
+document.querySelector('#info-dialog').addEventListener('pointerdown', event => { if (event.target.id === 'info-dialog') document.querySelector('#info-dialog').hidden = true; });
+document.addEventListener('keydown', event => { if (event.key === 'Escape') document.querySelector('#info-dialog').hidden = true; });
 document.querySelector('#add-object').addEventListener('click', () => manager.add());
 document.querySelector('#mic-permission').addEventListener('click', async () => {
   const ok = await recorder.requestPermission();
