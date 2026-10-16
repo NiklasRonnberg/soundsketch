@@ -7,14 +7,37 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main id="world" aria-label="Canvas with sound objects">
-    <div id="objects-layer"></div>
-  </main>
+  <main id="world" aria-label="Canvas with sound objects"><div id="objects-layer"></div></main>
   <div class="toolbar">
     <button id="add-object" class="add-button" type="button" aria-label="Add object" title="Add object">+</button>
     <button id="mic-permission" class="secondary-button" type="button">Enable microphone</button>
   </div>
+  <button id="info-button" class="info-button" type="button" aria-label="How to use Sound Sketch" title="How to use Sound Sketch">i</button>
   <button id="save-sounds" class="save-button" type="button">Save sounds</button>
+
+  <div id="info-dialog" class="info-dialog" role="dialog" aria-modal="true" aria-labelledby="info-dialog-title" hidden>
+    <div class="info-dialog-card">
+      <h2 id="info-dialog-title">How to use Sound Sketch</h2>
+      <div class="info-dialog-content">
+        <p>The microphone must be activated before sounds can be recorded. Click <strong>Enable microphone</strong> and allow microphone access in the browser. Alternatively, an existing audio file can be dragged and dropped directly onto an object’s recording button.</p>
+        <p>The canvas can be zoomed in and out using the mouse wheel. <strong>Right-click and drag</strong> to move around the canvas and focus on different parts of the workspace. Clicking the <strong>+</strong> button adds a new object. Clicking on empty space outside an object removes the current focus from text fields or annotations.</p>
+        <p>Each object contains a title, an annotation, and a sound. The title can be edited by clicking the title field and entering a new name. The annotation can contain text, an image, or both. Images can be dragged into an object either from the computer or from another browser window. When an image has been added, it covers the text annotation, but the annotation is displayed when hovering over the image. <strong>Double-click the image</strong> to edit the text annotation.</p>
+        <p>Sound can be recorded by pressing and holding <strong>Hold to record or drop audio file</strong>, then releasing the button when the recording is finished. An existing audio file can instead be dragged directly onto the same button. Once audio has been recorded or added, the button changes to <strong>Play</strong>, and the duration of the sound is displayed. The <strong>×</strong> button in the upper-right corner of an object deletes it.</p>
+        <p>Objects can be moved freely around the canvas. When two objects are brought close together, the object being moved snaps to the other object. Snapped objects are visually connected.</p>
+        <p>When objects are snapped horizontally, their sounds are played sequentially from left to right. Pressing <strong>Play</strong> on any object in the connected group plays the complete sequence. A sequence can contain as many objects as needed.</p>
+        <p>When objects are snapped vertically, their sounds are mixed and played simultaneously. Any number of sounds can be combined in this way. Vertical mixing and horizontal sequencing can also be combined. When a vertical group is followed by another object or group to its right, the next sound starts after the longest sound in the preceding vertical group has finished. Moving an object away from a connected group disconnects it and makes it a stand-alone object again.</p>
+        <p>The <strong>Save sounds</strong> button in the lower-right corner exports the work. For each stand-alone object or connected group, two files are downloaded:</p>
+        <ul>
+          <li>a WAV file containing the sequenced and/or mixed audio;</li>
+          <li>a TXT file containing the object titles, annotations, and the filenames of any images that have been added.</li>
+        </ul>
+        <p>The audio and text files use the title of the upper-left object in the group as their filename. If several independent objects or groups exist on the canvas, a separate WAV and TXT file is created for each. The browser may ask for permission to download multiple files, which must be allowed for all files to be saved.</p>
+        <p>The TXT file follows the same structure as the sound arrangement. Sequential sections are numbered, while annotations belonging to sounds that are mixed in parallel are separated by <strong>“Mixed with”</strong>.</p>
+      </div>
+      <button id="info-close" class="info-close" type="button">Close</button>
+    </div>
+  </div>
+
   <div id="mic-warning" class="mic-warning" role="dialog" aria-modal="true" aria-labelledby="mic-warning-title" hidden>
     <div class="mic-warning-card">
       <div class="mic-warning-icon">●</div>
