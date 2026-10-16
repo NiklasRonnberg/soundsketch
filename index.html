@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sound sketch</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="world" aria-label="Canvas with sound objects">
+    <div id="objects-layer"></div>
+  </main>
+  <div class="toolbar">
+    <button id="add-object" class="add-button" type="button" aria-label="Add object" title="Add object">+</button>
+    <button id="mic-permission" class="secondary-button" type="button">Enable microphone</button>
+  </div>
+  <button id="save-sounds" class="save-button" type="button">Save sounds</button>
+  <div id="mic-warning" class="mic-warning" role="dialog" aria-modal="true" aria-labelledby="mic-warning-title" hidden>
+    <div class="mic-warning-card">
+      <div class="mic-warning-icon">●</div>
+      <h2 id="mic-warning-title">Microphone not enabled</h2>
+      <p>Enable the microphone before recording audio.</p>
+      <div class="mic-warning-actions">
+        <button id="mic-warning-enable" type="button">Enable microphone</button>
+        <button id="mic-warning-close" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+* { box-sizing: border-box; }
+:root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #242035; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #f7f3ff; }
+button, input, textarea { font: inherit; }
+button { cursor: pointer; }
+#world { position: fixed; inset: 0; overflow: hidden; touch-action: none; background-color: #fbf9ff; background-image: radial-gradient(circle at 20% 20%, rgba(130,90,255,.12), transparent 30%), radial-gradient(circle at 80% 72%, rgba(255,91,145,.10), transparent 34%), radial-gradient(#d9d0ef 1.2px, transparent 1.2px); background-size: auto, auto, 26px 26px; }
+#objects-layer { position: absolute; left: 0; top: 0; width: 1px; height: 1px; transform-origin: 0 0; }
+.toolbar { position: fixed; z-index: 1000; top: 18px; left: 18px; display: flex; align-items: center; gap: 10px; pointer-events: none; }
+.toolbar > * { pointer-events: auto; }
+.add-button { width: 54px; height: 54px; border: 0; border-radius: 18px; color: white; background: linear-gradient(135deg,#745cff,#a057f2 55%,#ee5f9b); box-shadow: 0 10px 30px rgba(109,72,219,.34), inset 0 1px rgba(255,255,255,.35); font-size: 34px; line-height: 1; transition: transform .16s ease, box-shadow .16s ease; }
+.add-button:hover { transform: translateY(-2px) rotate(3deg); box-shadow: 0 14px 34px rgba(109,72,219,.42), inset 0 1px rgba(255,255,255,.4); }
+.secondary-button { height: 44px; border: 1px solid rgba(105,78,160,.15); border-radius: 14px; padding: 0 15px; background: rgba(255,255,255,.78); color: #514764; box-shadow: 0 8px 24px rgba(74,55,111,.11); backdrop-filter: blur(16px); font-size: 12px; font-weight: 720; transition: transform .16s ease, background .16s ease; }
+.secondary-button:hover { transform: translateY(-1px); background: rgba(255,255,255,.96); }
+.secondary-button.ready { color: #126746; border-color: #aee1c8; background: rgba(233,255,244,.92); }
+.sound-object { position: absolute; z-index: 1; width: 250px; min-height: 284px; padding: 14px; border: 1px solid rgba(106,83,155,.17); border-radius: 22px; background: linear-gradient(155deg,rgba(255,255,255,.96),rgba(249,246,255,.94)); box-shadow: 0 18px 45px rgba(65,49,93,.14), inset 0 1px rgba(255,255,255,.8); display: flex; flex-direction: column; gap: 11px; user-select: none; backdrop-filter: blur(12px); }
+.sound-object::before { content: ""; position: absolute; left: 16px; right: 16px; top: 0; height: 3px; border-radius: 0 0 5px 5px; background: linear-gradient(90deg,#735cff,#d45bb3,#ff8964); opacity: .78; }
+.sound-object.selected { border-color: #8d76ef; box-shadow: 0 0 0 4px rgba(117,92,255,.12), 0 20px 50px rgba(65,49,93,.19); }
+.object-top { display: flex; align-items: center; gap: 8px; }
+.object-grip { color: #b3a8c9; font-size: 17px; cursor: grab; padding: 0 1px; }
+.object-title { min-width: 0; width: 100%; border: 0; outline: 0; font-weight: 780; font-size: 14px; color: #2c2638; background: transparent; user-select: text; }
+.object-title::placeholder { color: #aaa0bc; }
+.delete-object { flex: 0 0 auto; width: 28px; height: 28px; border: 0; border-radius: 9px; background: #f4effa; color: #8e819e; font-size: 17px; transition: .14s ease; }
+.delete-object:hover { background: #ffeaf0; color: #cc3f62; transform: rotate(5deg); }
+.object-content { position: relative; display: flex; flex: 1; min-height: 150px; overflow: hidden; border: 1px dashed #cfc2e5; border-radius: 15px; background: linear-gradient(145deg,#fbf9ff,#f7f3fb); }
+.object-description { position: relative; z-index: 1; resize: none; width: 100%; min-height: 150px; padding: 12px; border: 0; outline: 0; background: transparent; color: #565063; font-size: 12px; line-height: 1.5; user-select: text; }
+.object-description::placeholder { color: #a89fb7; }
+.image-preview { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; object-fit: contain; background: #f8f5fc; pointer-events: none; }
+.image-preview[hidden] { display: none; }
+.object-content.drag-over { background: #f0ebff; border-color: #7c66e6; box-shadow: inset 0 0 0 2px rgba(124,102,230,.12); }
+.object-bottom { display: flex; align-items: center; gap: 9px; min-height: 42px; }
+.record-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 106px; height: 40px; padding: 0 14px; border: 0; border-radius: 13px; color: white; background: linear-gradient(135deg,#ee5578,#e24868); box-shadow: 0 7px 18px rgba(226,72,104,.22); font-size: 12px; font-weight: 740; touch-action: none; }
+.record-button:hover { filter: brightness(.97); transform: translateY(-1px); }
+.record-button.recording { background: linear-gradient(135deg,#cf254b,#a91537); box-shadow: 0 0 0 6px rgba(227,77,97,.14); animation: pulse 1s infinite; }
+.record-button.playback { background: linear-gradient(135deg,#6557dc,#8666ec); box-shadow: 0 7px 18px rgba(101,87,220,.22); }
+.record-icon { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+.record-button.playback .record-icon { width: 0; height: 0; border-radius: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 9px solid currentColor; background: transparent; }
+.object-meta { overflow: hidden; color: #a199ae; font-size: 10px; white-space: nowrap; text-overflow: ellipsis; }
+.snap-connection { position: absolute; z-index: 0; background: linear-gradient(135deg,#7c67ed,#dc5bae); box-shadow: 0 0 16px rgba(124,103,237,.35); pointer-events: none; }
+.image-text-overlay { position: absolute; inset: 0; z-index: 4; display: flex; align-items: flex-start; padding: 12px; background: linear-gradient(180deg,rgba(30,24,45,.72),rgba(30,24,45,.86)); color: #fff; font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow: auto; opacity: 0; pointer-events: none; transition: opacity .16s ease; }
+.object-content.has-image:hover .image-text-overlay:not(:empty) { opacity: 1; }
+.object-content.has-image .object-description { opacity: 0 !important; pointer-events: none !important; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 9px rgba(227,77,97,.07); } }
+@media (max-width: 520px) { .toolbar { top: 12px; left: 12px; } .add-button { width: 50px; height: 50px; } .secondary-button { height: 40px; } }
+.mic-warning[hidden] { display: none; }
+.mic-warning { position: fixed; inset: 0; z-index: 3000; display: grid; place-items: center; padding: 22px; background: rgba(35,27,52,.28); backdrop-filter: blur(8px); }
+.mic-warning-card { width: min(390px,100%); padding: 24px; border: 1px solid rgba(111,84,166,.18); border-radius: 22px; background: rgba(255,255,255,.96); box-shadow: 0 24px 70px rgba(53,38,78,.25); text-align: center; }
+.mic-warning-icon { width: 46px; height: 46px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 15px; color: #fff; background: linear-gradient(135deg,#ee5578,#a057f2); font-size: 17px; }
+.mic-warning-card h2 { margin: 0 0 7px; color: #2c2638; font-size: 19px; }
+.mic-warning-card p { margin: 0 0 20px; color: #71667f; font-size: 13px; line-height: 1.5; }
+.mic-warning-actions { display: flex; justify-content: center; gap: 9px; }
+.mic-warning-actions button { min-height: 40px; padding: 0 14px; border: 0; border-radius: 12px; font-weight: 720; }
+#mic-warning-enable { color: #fff; background: linear-gradient(135deg,#745cff,#a057f2); }
+#mic-warning-close { color: #665b73; background: #f2eef7; }
+.save-button { position: fixed; z-index: 1000; right: 18px; bottom: 18px; min-width: 126px; height: 48px; padding: 0 18px; border: 0; border-radius: 15px; color: #fff; background: linear-gradient(135deg,#6557dc,#a057f2 60%,#ee5f9b); box-shadow: 0 10px 30px rgba(101,87,220,.3); font-size: 13px; font-weight: 760; transition: transform .16s ease, filter .16s ease; }
+.save-button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.04); }
+.save-button:disabled { cursor: wait; opacity: .78; }
+@media (max-width: 520px) { .save-button { right: 12px; bottom: 12px; } }
+/* Image annotation editing: the image itself receives the double-click. */
+.object-content.has-image .image-preview { pointer-events: auto; cursor: text; }
+.object-content.has-image.editing-annotation .image-preview { opacity: .16; pointer-events: none; }
+.object-content.has-image.editing-annotation .image-text-overlay { display: none; }
+.object-content.has-image.editing-annotation .object-description { position: relative; z-index: 8; opacity: 1 !important; pointer-events: auto !important; background: rgba(255,255,255,.96); }
