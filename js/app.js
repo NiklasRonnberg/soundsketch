@@ -4,7 +4,7 @@ import { AudioRecorder } from './audio.js';
 import { SnapEngine } from './snap.js';
 import { PlaybackGraph } from './playback.js';
 import { SoundSaver } from './save.js';
-
+import { ObjectClipboard } from './object-clipboard.js';
 const layer = document.querySelector('#objects-layer');
 const status = null;
 const viewport = new CanvasViewport(document.querySelector('#world'), layer);
@@ -13,8 +13,7 @@ const snap = new SnapEngine();
 const playback = new PlaybackGraph(setStatus);
 const manager = new ObjectManager(layer, viewport, recorder, snap, playback, setStatus);
 new SoundSaver(document.querySelector('#save-sounds'), () => manager.items);
-
-// Clicking empty canvas space unfocuses text fields and clears object edit/selection states.
+new ObjectClipboard(manager);
 document.querySelector('#world').addEventListener('pointerdown', event => {
   if (event.button !== 0) return;
   if (event.target.closest('.sound-object, .toolbar, .save-button, .mic-warning')) return;
@@ -26,7 +25,6 @@ document.querySelector('#world').addEventListener('pointerdown', event => {
     item.imageTextOverlay.textContent = item.description;
   }
 });
-
 function setStatus(message) {
   if (message !== 'Enable the microphone before recording.') return;
   document.querySelector('#mic-warning').hidden = false;
