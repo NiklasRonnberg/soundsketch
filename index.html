@@ -7,13 +7,20 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <header class="project-title-bar">
+    <h1 id="project-title" class="project-title" title="Double-click to rename">Untitled project</h1>
+  </header>
   <main id="world" aria-label="Canvas with sound objects"><div id="objects-layer"></div></main>
   <div class="toolbar">
     <button id="add-object" class="add-button" type="button" aria-label="Add object" title="Add object">+</button>
     <button id="mic-permission" class="secondary-button" type="button">Enable microphone</button>
   </div>
   <button id="info-button" class="info-button" type="button" aria-label="How to use Sound Sketch" title="How to use Sound Sketch">i</button>
-  <button id="save-sounds" class="save-button" type="button">Save sounds</button>
+  <div class="project-actions" aria-label="Project actions">
+    <button id="import-project" class="project-action-button" type="button">Import project</button>
+    <button id="export-project" class="project-action-button" type="button">Export project</button>
+    <button id="save-sounds" class="save-button" type="button">Save sounds</button>
+  </div>
 
   <div id="info-dialog" class="info-dialog" role="dialog" aria-modal="true" aria-labelledby="info-dialog-title" hidden>
     <div class="info-dialog-card">
@@ -26,6 +33,7 @@
         <p>Objects can be moved freely around the canvas. When two objects are brought close together, the object being moved snaps to the other object. Snapped objects are visually connected.</p>
         <p>When objects are snapped horizontally, their sounds are played sequentially from left to right. Pressing <strong>Play</strong> on any object in the connected group plays the complete sequence. A sequence can contain as many objects as needed.</p>
         <p>When objects are snapped vertically, their sounds are mixed and played simultaneously. Any number of sounds can be combined in this way. Vertical mixing and horizontal sequencing can also be combined. When a vertical group is followed by another object or group to its right, the next sound starts after the longest sound in the preceding vertical group has finished. Moving an object away from a connected group disconnects it and makes it a stand-alone object again.</p>
+        <p>The <strong>Export project</strong> button saves the complete Sound Sketch project as a ZIP file, including the project title, sound objects, sounds, images, annotations, and their placements. Use <strong>Import project</strong> to reopen an exported project by selecting its ZIP file or dragging the ZIP file directly onto the button.</p>
         <p>The <strong>Save sounds</strong> button in the lower-right corner exports the work. For each stand-alone object or connected group, two files are downloaded:</p>
         <ul>
           <li>a WAV file containing the sequenced and/or mixed audio;</li>
