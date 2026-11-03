@@ -5,8 +5,37 @@ import { SnapEngine } from './snap.js';
 import { PlaybackGraph } from './playback.js';
 import { SoundSaver } from './save.js';
 import { ObjectClipboard } from './object-clipboard.js';
+import { ProjectExporter } from './export.js';
+import { ProjectImporter } from './import.js';
 const layer = document.querySelector('#objects-layer');
 const status = null;
+const projectTitle = document.querySelector('#project-title');
+if (!projectTitle) throw new Error('Missing #project-title in index.html');
+const defaultProjectTitle = 'Untitled project';
+projectTitle.textContent = defaultProjectTitle;
+document.title = 'Sound sketch';
+const saveProjectTitle = () => {
+  const value = projectTitle.textContent.replace(/\s+/g, ' ').trim() || defaultProjectTitle;
+  projectTitle.textContent = value;
+  projectTitle.contentEditable = 'false';
+  document.title = `${value} - Sound Sketch`;
+};
+projectTitle.addEventListener('dblclick', event => {
+  event.preventDefault();
+  event.stopPropagation();
+  projectTitle.contentEditable = 'true';
+  projectTitle.focus();
+  const selection = window.getSelection();
+  const range = document.createRange();
+  range.selectNodeContents(projectTitle);
+  selection.removeAllRanges();
+  selection.addRange(range);
+});
+projectTitle.addEventListener('blur', saveProjectTitle);
+projectTitle.addEventListener('keydown', event => {
+  if (event.key === 'Enter') { event.preventDefault(); projectTitle.blur(); }
+  if (event.key === 'Escape') { event.preventDefault(); projectTitle.blur(); }
+});
 const viewport = new CanvasViewport(document.querySelector('#world'), layer);
 const recorder = new AudioRecorder(setStatus);
 const snap = new SnapEngine();
@@ -14,9 +43,14 @@ const playback = new PlaybackGraph(setStatus);
 const manager = new ObjectManager(layer, viewport, recorder, snap, playback, setStatus);
 new SoundSaver(document.querySelector('#save-sounds'), () => manager.items);
 new ObjectClipboard(manager);
+new ProjectExporter(document.querySelector('#export-project'), manager, () => projectTitle.textContent.trim() || defaultProjectTitle);
+new ProjectImporter(document.querySelector('#import-project'), manager, value => {
+  projectTitle.textContent = value || defaultProjectTitle;
+  document.title = `${projectTitle.textContent} - Sound Sketch`;
+});
 document.querySelector('#world').addEventListener('pointerdown', event => {
   if (event.button !== 0) return;
-  if (event.target.closest('.sound-object, .toolbar, .save-button, .mic-warning')) return;
+  if (event.target.closest('.sound-object, .toolbar, .save-button, .mic-warning, .project-title-bar, .project-actions')) return;
   if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   for (const item of manager.items) {
     item.element.classList.remove('selected');

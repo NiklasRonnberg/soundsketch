@@ -6,7 +6,30 @@ export class ObjectManager {
     this.items = [];
   }
   add(opts = {}) {
-    const item = { id: nextId++, x: opts.x ?? 120 + (this.items.length % 4) * 28, y: opts.y ?? 120 + (this.items.length % 4) * 28, title: opts.title || '', description: '', audioUrl: null, audioBlob: null, audioDuration: 0, recorder: null };
+    // Explicit positions are used by imports/paste. New objects get a clear free position instead of
+    // being created on top of an existing object's interactive image/content area.
+    let x = opts.x;
+    let y = opts.y;
+    if (x == null || y == null) {
+      const width = 250;
+      const height = 284;
+      const gap = 28;
+      x = 120;
+      y = 120;
+      const overlaps = (px, py, other) => {
+        const ow = other.element?.offsetWidth || width;
+        const oh = other.element?.offsetHeight || height;
+        return px < other.x + ow + gap && px + width + gap > other.x &&
+               py < other.y + oh + gap && py + height + gap > other.y;
+      };
+      let attempts = 0;
+      while (this.items.some(other => overlaps(x, y, other)) && attempts < 200) {
+        x += width + gap;
+        if (x > 1200) { x = 120; y += height + gap; }
+        attempts++;
+      }
+    }
+    const item = { id: nextId++, x, y, title: opts.title || '', description: '', audioUrl: null, audioBlob: null, audioDuration: 0, recorder: null };
     const el = document.createElement('article');
     el.className = 'sound-object';
     el.innerHTML = `
@@ -100,9 +123,13 @@ export class ObjectManager {
           if (Math.abs(a.x + aw + gap - b.x) <= tolerance) connection = { x: a.x + aw, y: a.y, width: gap, height: Math.min(ah, bh) };
           else if (Math.abs(b.x + bw + gap - a.x) <= tolerance) connection = { x: b.x + bw, y: b.y, width: gap, height: Math.min(ah, bh) };
         }
-        if (!connection && Math.abs(a.x - b.x) <= tolerance) {
-          if (Math.abs(a.y + ah + gap - b.y) <= tolerance) connection = { x: a.x, y: a.y + ah, width: Math.min(aw, bw), height: gap };
-          else if (Math.abs(b.y + bh + gap - a.y) <= tolerance) connection = { x: b.x, y: b.y + bh, width: Math.min(aw, bw), height: gap };
+        if (!connection) {
+          const overlapLeft = Math.max(a.x, b.x);
+          const overlapRight = Math.min(a.x + aw, b.x + bw);
+          if (overlapRight > overlapLeft) {
+            if (Math.abs(a.y + ah + gap - b.y) <= tolerance) connection = { x: overlapLeft, y: a.y + ah, width: overlapRight - overlapLeft, height: gap };
+            else if (Math.abs(b.y + bh + gap - a.y) <= tolerance) connection = { x: overlapLeft, y: b.y + bh, width: overlapRight - overlapLeft, height: gap };
+          }
         }
         if (connection) {
           const el = document.createElement('div');
@@ -134,17 +161,37 @@ export class ObjectManager {
       }
       starting = true; pointerId = e.pointerId;
       button.setPointerCapture?.(e.pointerId);
+      const relation = this.playback.recordingRelation(item, this.items);
+
+      // A new object snapped to the right records only after the left-hand sequence has played.
+      if (relation.mode === 'after-left') {
+        item.recordLabel.textContent = 'Waiting to record…';
+        item.meta.textContent = 'Playing preceding sounds';
+        await this.playback.playBeforeRecording(item, this.items);
+        if (pointerId === null) { starting = false; return; }
+      }
+
       const ok = await this.recorder.start(item);
       starting = false;
       if (ok && item.recorder?.state === 'recording') {
         button.classList.add('recording');
         item.recordLabel.textContent = 'Recording… release';
         item.meta.textContent = 'Recording audio';
+
+        // Vertically snapped objects record while the existing connected sounds play.
+        if (relation.mode === 'simultaneous') {
+          this.playback.playSimultaneousWithRecording(item, this.items);
+        }
       }
     };
     const stop = e => {
       if (pointerId !== null && e.pointerId !== undefined && e.pointerId !== pointerId) return;
-      if (item.recorder?.state === 'recording') this.recorder.stop(item);
+      const relation = this.playback.recordingRelation(item, this.items);
+      if (item.recorder?.state === 'recording') {
+        this.recorder.stop(item);
+        // If the new recording is left of an existing horizontal sequence, that sequence starts after release.
+        if (relation.mode === 'before-right') this.playback.playAfterRecording(item, this.items);
+      }
       pointerId = null;
     };
     button.addEventListener('pointerdown', start);
@@ -242,7 +289,7 @@ export class ObjectManager {
     const el = item.element;
     let drag = null;
     el.addEventListener('pointerdown', e => {
-      if (e.button !== 0 || e.target.closest('input, textarea, button, .image-preview')) return;
+      if (e.button !== 0 || e.target.closest('input, textarea, button, .image-preview, .object-content')) return;
       e.stopPropagation();
       drag = { sx: e.clientX, sy: e.clientY, x: item.x, y: item.y, id: e.pointerId };
       el.setPointerCapture(e.pointerId);
@@ -260,7 +307,8 @@ export class ObjectManager {
     });
     const end = e => {
       if (!drag) return;
-      item.x = Math.max(0, item.x); item.y = Math.max(0, item.y);
+      if (!item.verticalSnap) item.x = Math.max(0, item.x);
+      item.y = Math.max(0, item.y);
       const pos = this.snap.resolve(item, this.items);
       item.x = pos.x; item.y = pos.y;
       this.place(item);
