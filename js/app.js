@@ -11,7 +11,7 @@ const layer = document.querySelector('#objects-layer');
 const status = null;
 const projectTitle = document.querySelector('#project-title');
 if (!projectTitle) throw new Error('Missing #project-title in index.html');
-const defaultProjectTitle = 'Untitled project';
+const defaultProjectTitle = 'Untitled sketch';
 projectTitle.textContent = defaultProjectTitle;
 document.title = 'Sound sketch';
 const saveProjectTitle = () => {

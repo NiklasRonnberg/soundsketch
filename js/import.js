@@ -58,11 +58,11 @@ export class ProjectImporter {
     try {
       const files = readStoredZip(await file.arrayBuffer());
       const manifestBytes = files.get('project.json');
-      if (!manifestBytes) throw new Error('project.json is missing.');
+      if (!manifestBytes) throw new Error('Sketch data is missing.');
       const manifest = JSON.parse(decoder.decode(manifestBytes));
-      if (manifest.format !== 'sound-sketch-project' || !Array.isArray(manifest.objects)) throw new Error('Not a Sound Sketch project.');
+      if (manifest.format !== 'sound-sketch-project' || !Array.isArray(manifest.objects)) throw new Error('Not a valid Sound Sketch file.');
       for (const item of [...this.manager.items]) this.manager.remove(item);
-      this.setTitle(manifest.projectTitle || 'Untitled project');
+      this.setTitle(manifest.projectTitle || 'Untitled sketch');
       for (const record of manifest.objects) {
         const item = this.manager.add({ x: Number(record.x) || 0, y: Number(record.y) || 0, title: record.title || '' });
         item.description = record.annotation || '';
@@ -86,7 +86,7 @@ export class ProjectImporter {
       this.button.textContent = 'Imported';
     } catch (error) {
       console.error(error); this.button.textContent = 'Import failed';
-      alert(`Could not import project: ${error.message}`);
+      alert(`Could not import sketch: ${error.message}`);
     } finally {
       setTimeout(() => { this.button.disabled = false; this.button.textContent = original; }, 1400);
     }
