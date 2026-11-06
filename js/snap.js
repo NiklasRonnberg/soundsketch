@@ -1,52 +1,75 @@
 export class SnapEngine {
-  constructor() { this.gap = 12; this.threshold = 34; }
+  constructor() {
+    this.gap = 12;
+    this.threshold = 34;
+    this.verticalOffsets = [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75];
+  }
+
   resolve(item, items) {
-    const w = item.element.offsetWidth, h = item.element.offsetHeight;
+    const w = item.element.offsetWidth;
+    const h = item.element.offsetHeight;
     const others = items.filter(other => other !== item);
-    let x = item.x, y = item.y;
-    const intersects = (px, py, other) => {
-      const ow = other.element.offsetWidth, oh = other.element.offsetHeight;
+    const x = item.x;
+    const y = item.y;
+    const candidates = [];
+
+    const overlaps = (px, py, other) => {
+      const ow = other.element.offsetWidth;
+      const oh = other.element.offsetHeight;
       return px < other.x + ow && px + w > other.x && py < other.y + oh && py + h > other.y;
     };
-    const candidates = [];
+
     for (const other of others) {
-      const ow = other.element.offsetWidth, oh = other.element.offsetHeight;
-      // Normal left/right snapping remains exactly as before.
-      candidates.push(
-        { x: other.x - w - this.gap, y: other.y, axis: 'x' },
-        { x: other.x + ow + this.gap, y: other.y, axis: 'x' }
-      );
-      // Only top/bottom snapping gets timing offsets. Zero is 100% overlap.
-      // +/-25%, +/-50%, and +/-75% of the object width give 75%, 50%, and 25% overlap.
-      for (const fraction of [-0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75]) {
-        candidates.push(
-          { x: other.x + ow * fraction, y: other.y - h - this.gap, axis: 'y', fraction, other },
-          { x: other.x + ow * fraction, y: other.y + oh + this.gap, axis: 'y', fraction, other }
-        );
+      const ow = other.element.offsetWidth;
+      const oh = other.element.offsetHeight;
+
+      const verticalOverlap = Math.min(y + h, other.y + oh) - Math.max(y, other.y);
+      if (verticalOverlap > 0) {
+        const leftX = other.x - w - this.gap;
+        const rightX = other.x + ow + this.gap;
+        const leftDistance = Math.abs(x - leftX);
+        const rightDistance = Math.abs(x - rightX);
+        if (leftDistance <= this.threshold) candidates.push({ x: leftX, y: other.y, axis: 'x', distance: leftDistance });
+        if (rightDistance <= this.threshold) candidates.push({ x: rightX, y: other.y, axis: 'x', distance: rightDistance });
+      }
+
+      const topY = other.y - h - this.gap;
+      const bottomY = other.y + oh + this.gap;
+      for (const fraction of this.verticalOffsets) {
+        const offsetX = other.x + ow * fraction;
+        const horizontalOverlap = Math.min(offsetX + w, other.x + ow) - Math.max(offsetX, other.x);
+        if (horizontalOverlap <= 0) continue;
+
+        const topDistance = Math.hypot(x - offsetX, y - topY);
+        const bottomDistance = Math.hypot(x - offsetX, y - bottomY);
+        if (topDistance <= this.threshold) candidates.push({ x: offsetX, y: topY, axis: 'y', fraction, other, distance: topDistance });
+        if (bottomDistance <= this.threshold) candidates.push({ x: offsetX, y: bottomY, axis: 'y', fraction, other, distance: bottomDistance });
       }
     }
-    for (const candidate of candidates) candidate.d = Math.hypot(x - candidate.x, y - candidate.y);
-    const snapped = candidates.filter(candidate => candidate.d <= this.threshold).sort((a,b) => a.d-b.d)[0];
+
+    const snapped = candidates.sort((a, b) => a.distance - b.distance)[0];
     item.verticalSnap = null;
     if (snapped) {
-      x = snapped.x; y = snapped.y;
       if (snapped.axis === 'y') item.verticalSnap = { otherId: snapped.other.id, fraction: snapped.fraction };
+      return { x: snapped.x, y: snapped.y };
     }
-    // Keep the original collision prevention, except vertically snapped sound objects are intentionally allowed
-    // to share their horizontal range because they are separated vertically by the snap gap.
-    for (let pass=0; pass<others.length+2; pass++) {
-      const collision = others.find(other => intersects(x,y,other));
-      if (!collision) break;
-      const ow = collision.element.offsetWidth, oh = collision.element.offsetHeight;
-      const positions = [
-        { x: collision.x-w-this.gap, y: collision.y },
-        { x: collision.x+ow+this.gap, y: collision.y },
-        { x: collision.x, y: collision.y-h-this.gap },
-        { x: collision.x, y: collision.y+oh+this.gap }
-      ].map(position => ({...position, d: Math.hypot(x-position.x,y-position.y), blocked: others.some(other => other!==collision && intersects(position.x,position.y,other))}))
-       .sort((a,b) => Number(a.blocked)-Number(b.blocked) || a.d-b.d);
-      x=positions[0].x; y=positions[0].y;
-    }
-    return {x,y};
+
+    const collision = others.find(other => overlaps(x, y, other));
+    if (!collision) return { x, y };
+
+    const ow = collision.element.offsetWidth;
+    const oh = collision.element.offsetHeight;
+    const positions = [
+      { x: collision.x - w - this.gap, y },
+      { x: collision.x + ow + this.gap, y },
+      { x, y: collision.y - h - this.gap },
+      { x, y: collision.y + oh + this.gap }
+    ].map(position => ({
+      ...position,
+      distance: Math.hypot(x - position.x, y - position.y),
+      blocked: others.some(other => other !== collision && overlaps(position.x, position.y, other))
+    })).sort((a, b) => Number(a.blocked) - Number(b.blocked) || a.distance - b.distance);
+
+    return { x: positions[0].x, y: positions[0].y };
   }
 }

@@ -307,8 +307,6 @@ export class ObjectManager {
     });
     const end = e => {
       if (!drag) return;
-      if (!item.verticalSnap) item.x = Math.max(0, item.x);
-      item.y = Math.max(0, item.y);
       const pos = this.snap.resolve(item, this.items);
       item.x = pos.x; item.y = pos.y;
       this.place(item);
