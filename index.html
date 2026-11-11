@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sound sketch</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .record-mode-icon { display: inline-block; width: 15px; height: 15px; border-radius: 50%; vertical-align: middle; }
+    .record-mode-icon.solid-circle { background: currentColor; }
+    .record-mode-icon.dotted-circle { border: 2px dotted currentColor; background: transparent; }
+  </style>
 </head>
 <body>
   <header class="project-title-bar">
@@ -13,6 +18,7 @@
   <main id="world" aria-label="Canvas with sound objects"><div id="objects-layer"></div></main>
   <div class="toolbar">
     <button id="add-object" class="add-button" type="button" aria-label="Add object" title="Add object">+</button>
+    <button id="record-mode" class="add-button record-mode-button" type="button" aria-label="Recording mode: hold" title="Switch to click recording"><span class="record-mode-icon solid-circle" aria-hidden="true"></span></button>
     <button id="mic-permission" class="secondary-button" type="button">Enable microphone</button>
   </div>
   <button id="info-button" class="info-button" type="button" aria-label="How to use Sound Sketch" title="How to use Sound Sketch">i</button>
@@ -27,9 +33,9 @@
       <h2 id="info-dialog-title">How to use Sound Sketch</h2>
       <div class="info-dialog-content">
         <p>The microphone must be activated before sounds can be recorded. Click <strong>Enable microphone</strong> and allow microphone access in the browser. Alternatively, an existing audio file can be dragged and dropped directly onto an object’s recording button.</p>
-        <p>The canvas can be zoomed in and out using the mouse wheel. <strong>Right-click and drag</strong> to move around the canvas and focus on different parts of the workspace. Clicking the <strong>+</strong> button adds a new object. Clicking on empty space outside an object removes the current focus from text fields or annotations.</p>
+        <p>The canvas can be zoomed in and out using the mouse wheel. <strong>Right-click and drag</strong> to move around the canvas and focus on different parts of the workspace. <strong>Left-click and drag on empty canvas</strong> to draw a selection rectangle around multiple sound objects. Dragging any selected object moves the complete selection while preserving the objects’ relative positions. Clicking on empty canvas outside the selected objects deselects them. Clicking the <strong>+</strong> button adds a new object.</p>
         <p>Each object contains a title, an annotation, and a sound. The title can be edited by clicking the title field and entering a new name. The annotation can contain text, an image, or both. Images can be dragged into an object either from the computer or from another browser window. When an image has been added, it covers the text annotation, but the annotation is displayed when hovering over the image. <strong>Double-click the image</strong> to edit the text annotation.</p>
-        <p>Sound can be recorded by pressing and holding <strong>Hold to record or drop audio file</strong>, then releasing the button when the recording is finished. An existing audio file can instead be dragged directly onto the same button. Once audio has been recorded or added, the button changes to <strong>Play</strong>, and the duration of the sound is displayed. The <strong>×</strong> button in the upper-right corner of an object deletes it.</p>
+        <p>The recording-mode button between <strong>+</strong> and <strong>Enable microphone</strong> selects how recording starts and stops. A <strong>solid circle</strong> means hold-to-record mode: press and hold <strong>Hold to record or drop audio file</strong>, then release it to stop recording. A <strong>dotted circle</strong> means click-to-record mode: click <strong>Click to start recording or drop audio file</strong> once to start recording; the button changes to <strong>Stop recording</strong>, and clicking it again stops the recording. An existing audio file can be dragged directly onto the recording button in either mode. Once audio has been recorded or added, the button changes to <strong>Play</strong>, and the duration of the sound is displayed. The <strong>×</strong> button in the upper-right corner of an object deletes it.</p>
         <p>Objects can be moved freely around the canvas. When two objects are brought close together, the object being moved snaps to the other object. Snapped objects are visually connected.</p>
         <p>When objects are snapped horizontally, their sounds are played sequentially from left to right. Pressing <strong>Play</strong> on any object in the connected group plays the complete sequence. A sequence can contain as many objects as needed.</p>
         <p>When objects are snapped vertically, their sounds are mixed and played simultaneously. Any number of sounds can be combined in this way. Vertical mixing and horizontal sequencing can also be combined. When a vertical group is followed by another object or group to its right, the next sound starts after the longest sound in the preceding vertical group has finished. Moving an object away from a connected group disconnects it and makes it a stand-alone object again.</p>

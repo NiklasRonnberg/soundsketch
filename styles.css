@@ -656,3 +656,7 @@ button {
         inset 0 -1px 0 rgba(255, 255, 255, 0.12),
         0 2px 4px rgba(101, 87, 220, 0.16) !important;
 }
+
+.record-mode-button { font-size: 20px; }
+.record-mode-button.click-mode { background: linear-gradient(135deg, #ee5578, #e24868); }
+.selection-rectangle { position: fixed; z-index: 900; border: 1px solid #745cff; background: rgba(116,92,255,.12); pointer-events: none; }
