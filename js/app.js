@@ -48,17 +48,7 @@ new ProjectImporter(document.querySelector('#import-project'), manager, value =>
   projectTitle.textContent = value || defaultProjectTitle;
   document.title = `${projectTitle.textContent} - Sound Sketch`;
 });
-document.querySelector('#world').addEventListener('pointerdown', event => {
-  if (event.button !== 0) return;
-  if (event.target.closest('.sound-object, .toolbar, .save-button, .mic-warning, .project-title-bar, .project-actions')) return;
-  if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-  for (const item of manager.items) {
-    item.element.classList.remove('selected');
-    item.content.classList.remove('editing-annotation');
-    item.description = item.descriptionInput.value;
-    item.imageTextOverlay.textContent = item.description;
-  }
-});
+manager.setupMarquee(document.querySelector('#world'));
 function setStatus(message) {
   if (message !== 'Enable the microphone before recording.') return;
   document.querySelector('#mic-warning').hidden = false;
@@ -68,6 +58,15 @@ document.querySelector('#info-close').addEventListener('click', () => { document
 document.querySelector('#info-dialog').addEventListener('pointerdown', event => { if (event.target.id === 'info-dialog') document.querySelector('#info-dialog').hidden = true; });
 document.addEventListener('keydown', event => { if (event.key === 'Escape') document.querySelector('#info-dialog').hidden = true; });
 document.querySelector('#add-object').addEventListener('click', () => manager.add());
+const recordModeButton=document.querySelector('#record-mode');
+recordModeButton.addEventListener('click',()=>{
+  const clickMode=manager.recordingMode!=='click';
+  manager.setRecordingMode(clickMode?'click':'hold');
+  recordModeButton.innerHTML = clickMode
+    ? '<span class="record-mode-icon dotted-circle" aria-hidden="true"></span>'
+    : '<span class="record-mode-icon solid-circle" aria-hidden="true"></span>';
+  recordModeButton.title=clickMode?'Switch to hold recording':'Switch to click recording';
+});
 document.querySelector('#mic-permission').addEventListener('click', async () => {
   const ok = await recorder.requestPermission();
   const button = document.querySelector('#mic-permission');

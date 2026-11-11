@@ -7,16 +7,10 @@ export class ObjectClipboard {
     this.bind();
   }
   bind() {
-    this.manager.layer.addEventListener('pointerdown', event => {
-      const element = event.target.closest('.sound-object');
-      if (!element) return;
-      const item = this.manager.items.find(candidate => candidate.element === element);
-      if (item) this.select(item);
-    }, true);
     document.addEventListener('keydown', event => this.onKeyDown(event));
   }
   select(item) {
-    for (const candidate of this.manager.items) candidate.element.classList.toggle('selected', candidate === item);
+    this.manager.setSelection([item]);
     this.selected = item;
   }
   isEditingText() {
@@ -25,9 +19,10 @@ export class ObjectClipboard {
   onKeyDown(event) {
     if (!(event.ctrlKey || event.metaKey) || event.altKey || this.isEditingText()) return;
     const key = event.key.toLowerCase();
-    if (key === 'c' && this.selected) {
+    const selected = [...this.manager.selectedItems][0] || this.selected;
+    if (key === 'c' && selected) {
       event.preventDefault();
-      this.copied = this.snapshot(this.selected);
+      this.copied = this.snapshot(selected);
       this.pasteCount = 0;
     }
     if (key === 'v' && this.copied) {

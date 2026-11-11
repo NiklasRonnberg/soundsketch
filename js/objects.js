@@ -4,6 +4,42 @@ export class ObjectManager {
     this.layer = layer; this.viewport = viewport; this.recorder = recorder;
     this.snap = snap; this.playback = playback; this.setStatus = setStatus;
     this.items = [];
+    this.selectedItems = new Set();
+    this.recordingMode = 'hold';
+  }
+  setRecordingMode(mode) {
+    this.recordingMode = mode === 'click' ? 'click' : 'hold';
+    for (const item of this.items) this.updateRecordLabel(item);
+  }
+  updateRecordLabel(item) {
+    if (item.recordButton.classList.contains('playback') || item.recorder?.state === 'recording') return;
+    item.recordLabel.textContent = this.recordingMode === 'click' ? 'Click to start recording or drop audio file' : 'Hold to record or drop audio file';
+  }
+  setSelection(items) {
+    this.selectedItems = new Set(items);
+    for (const item of this.items) item.element.classList.toggle('selected', this.selectedItems.has(item));
+  }
+  clearSelection() { this.setSelection([]); }
+  setupMarquee(world) {
+    let marquee = null;
+    world.addEventListener('pointerdown', event => {
+      if (event.button !== 0 || event.target.closest('.sound-object, .toolbar, .save-button, .mic-warning, .project-title-bar, .project-actions, .info-button')) return;
+      event.preventDefault();
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      this.clearSelection();
+      const rectangle = document.createElement('div'); rectangle.className = 'selection-rectangle'; document.body.appendChild(rectangle);
+      marquee = { id:event.pointerId, sx:event.clientX, sy:event.clientY, rectangle };
+      world.setPointerCapture(event.pointerId);
+    });
+    world.addEventListener('pointermove', event => {
+      if (!marquee || event.pointerId !== marquee.id) return;
+      const left=Math.min(marquee.sx,event.clientX), top=Math.min(marquee.sy,event.clientY);
+      const right=Math.max(marquee.sx,event.clientX), bottom=Math.max(marquee.sy,event.clientY);
+      Object.assign(marquee.rectangle.style,{left:`${left}px`,top:`${top}px`,width:`${right-left}px`,height:`${bottom-top}px`});
+      this.setSelection(this.items.filter(item => { const rect=item.element.getBoundingClientRect(); return rect.right>=left&&rect.left<=right&&rect.bottom>=top&&rect.top<=bottom; }));
+    });
+    const end = event => { if (!marquee || (event?.pointerId!==undefined && event.pointerId!==marquee.id)) return; marquee.rectangle.remove(); marquee=null; };
+    world.addEventListener('pointerup',end); world.addEventListener('pointercancel',end); world.addEventListener('lostpointercapture',end);
   }
   add(opts = {}) {
     // Explicit positions are used by imports/paste. New objects get a clear free position instead of
@@ -90,6 +126,7 @@ export class ObjectManager {
       item.imageTextOverlay.textContent = item.description;
     });
     this.setupRecording(item);
+    this.updateRecordLabel(item);
     this.setupAudioDrop(item);
     this.setupImageDrop(item);
     this.setupDrag(item);
@@ -107,6 +144,7 @@ export class ObjectManager {
     if (item.audioUrl) URL.revokeObjectURL(item.audioUrl);
     if (item.imageIsObjectUrl && item.imageUrl) URL.revokeObjectURL(item.imageUrl);
     item.element.remove();
+    this.selectedItems.delete(item);
     this.items = this.items.filter(x => x !== item);
     this.updateConnections();
   }
@@ -146,61 +184,28 @@ export class ObjectManager {
   place(item) { item.element.style.left = `${item.x}px`; item.element.style.top = `${item.y}px`; }
   refreshScale() { for (const item of this.items) this.place(item); }
   setupRecording(item) {
-    const button = item.recordButton;
-    let pointerId = null, starting = false;
-    const start = async e => {
-      if (button.classList.contains('playback')) {
-        e.preventDefault();
-        this.playback.playFrom(item, this.items);
-        return;
-      }
-      if (starting || item.recorder?.state === 'recording') return;
-      if (!this.recorder.stream || !this.recorder.stream.active) {
-        this.setStatus('Enable the microphone before recording.');
-        return;
-      }
-      starting = true; pointerId = e.pointerId;
-      button.setPointerCapture?.(e.pointerId);
-      const relation = this.playback.recordingRelation(item, this.items);
-
-      // A new object snapped to the right records only after the left-hand sequence has played.
-      if (relation.mode === 'after-left') {
-        item.recordLabel.textContent = 'Waiting to record…';
-        item.meta.textContent = 'Playing preceding sounds';
-        await this.playback.playBeforeRecording(item, this.items);
-        if (pointerId === null) { starting = false; return; }
-      }
-
-      const ok = await this.recorder.start(item);
-      starting = false;
-      if (ok && item.recorder?.state === 'recording') {
-        button.classList.add('recording');
-        item.recordLabel.textContent = 'Recording… release';
-        item.meta.textContent = 'Recording audio';
-
-        // Vertically snapped objects record while the existing connected sounds play.
-        if (relation.mode === 'simultaneous') {
-          this.playback.playSimultaneousWithRecording(item, this.items);
-        }
-      }
+    const button=item.recordButton; let pointerId=null, starting=false;
+    const stop=e=>{
+      if (this.recordingMode==='hold' && pointerId!==null && e?.pointerId!==undefined && e.pointerId!==pointerId) return;
+      const relation=this.playback.recordingRelation(item,this.items);
+      if (item.recorder?.state==='recording') { this.recorder.stop(item); if (relation.mode==='before-right') this.playback.playAfterRecording(item,this.items); }
+      pointerId=null;
     };
-    const stop = e => {
-      if (pointerId !== null && e.pointerId !== undefined && e.pointerId !== pointerId) return;
-      const relation = this.playback.recordingRelation(item, this.items);
-      if (item.recorder?.state === 'recording') {
-        this.recorder.stop(item);
-        // If the new recording is left of an existing horizontal sequence, that sequence starts after release.
-        if (relation.mode === 'before-right') this.playback.playAfterRecording(item, this.items);
-      }
-      pointerId = null;
+    const start=async e=>{
+      if (button.classList.contains('playback')) { e.preventDefault(); this.playback.playFrom(item,this.items); return; }
+      if (this.recordingMode==='click' && item.recorder?.state==='recording') { e.preventDefault(); stop(e); return; }
+      if (starting || item.recorder?.state==='recording') return;
+      if (!this.recorder.stream || !this.recorder.stream.active) { this.setStatus('Enable the microphone before recording.'); return; }
+      starting=true; pointerId=e.pointerId; if (this.recordingMode==='hold') button.setPointerCapture?.(e.pointerId);
+      const relation=this.playback.recordingRelation(item,this.items);
+      if (relation.mode==='after-left') { item.recordLabel.textContent='Waiting to record…'; item.meta.textContent='Playing preceding sounds'; await this.playback.playBeforeRecording(item,this.items); if (this.recordingMode==='hold' && pointerId===null) { starting=false; this.updateRecordLabel(item); return; } }
+      const ok=await this.recorder.start(item); starting=false;
+      if (ok && item.recorder?.state==='recording') { button.classList.add('recording'); item.recordLabel.textContent=this.recordingMode==='click'?'Stop recording':'Recording… release'; item.meta.textContent='Recording audio'; if (relation.mode==='simultaneous') this.playback.playSimultaneousWithRecording(item,this.items); }
     };
-    button.addEventListener('pointerdown', start);
-    button.addEventListener('pointerup', stop);
-    button.addEventListener('pointercancel', stop);
-    button.addEventListener('lostpointercapture', stop);
-    button.addEventListener('click', e => {
-      if (button.classList.contains('playback')) this.playback.playFrom(item, this.items);
-    });
+    button.addEventListener('pointerdown',start);
+    button.addEventListener('pointerup',e=>{if(this.recordingMode==='hold')stop(e);});
+    button.addEventListener('pointercancel',e=>{if(this.recordingMode==='hold')stop(e);});
+    button.addEventListener('lostpointercapture',e=>{if(this.recordingMode==='hold')stop(e);});
   }
   setupAudioDrop(item) {
     const button = item.recordButton;
@@ -286,35 +291,28 @@ export class ObjectManager {
     });
   }
   setupDrag(item) {
-    const el = item.element;
-    let drag = null;
-    el.addEventListener('pointerdown', e => {
-      if (e.button !== 0 || e.target.closest('input, textarea, button, .image-preview, .object-content')) return;
+    const el=item.element; let drag=null;
+    el.addEventListener('pointerdown',e=>{
+      if(e.button!==0 || e.target.closest('input, textarea, button, .image-preview, .object-content')) return;
       e.stopPropagation();
-      drag = { sx: e.clientX, sy: e.clientY, x: item.x, y: item.y, id: e.pointerId };
+      if(!this.selectedItems.has(item)) this.setSelection([item]);
+      const group=[...this.selectedItems];
+      drag={sx:e.clientX,sy:e.clientY,id:e.pointerId,group,starts:new Map(group.map(candidate=>[candidate,{x:candidate.x,y:candidate.y}]))};
       el.setPointerCapture(e.pointerId);
-      el.classList.add('selected');
     });
-    el.addEventListener('pointermove', e => {
-      if (!drag) return;
-      const dx = (e.clientX - drag.sx) / this.viewport.scale;
-      const dy = (e.clientY - drag.sy) / this.viewport.scale;
-      item.x = drag.x + dx; item.y = drag.y + dy;
-      const pos = this.snap.resolve(item, this.items);
-      item.x = pos.x; item.y = pos.y;
-      this.place(item);
+    el.addEventListener('pointermove',e=>{
+      if(!drag || e.pointerId!==drag.id) return;
+      const dx=(e.clientX-drag.sx)/this.viewport.scale, dy=(e.clientY-drag.sy)/this.viewport.scale;
+      const anchorStart=drag.starts.get(item);
+      item.x=anchorStart.x+dx; item.y=anchorStart.y+dy;
+      const outside=this.items.filter(candidate=>!drag.group.includes(candidate));
+      const pos=this.snap.resolve(item,[item,...outside]);
+      const appliedX=pos.x-anchorStart.x, appliedY=pos.y-anchorStart.y;
+      for(const candidate of drag.group){ const origin=drag.starts.get(candidate); candidate.x=origin.x+appliedX; candidate.y=origin.y+appliedY; this.place(candidate); }
       this.updateConnections();
     });
-    const end = e => {
-      if (!drag) return;
-      const pos = this.snap.resolve(item, this.items);
-      item.x = pos.x; item.y = pos.y;
-      this.place(item);
-      this.updateConnections();
-      drag = null; el.classList.remove('selected');
-    };
-    el.addEventListener('pointerup', end);
-    el.addEventListener('pointercancel', end);
-    el.addEventListener('lostpointercapture', end);
+    const end=e=>{ if(!drag || (e?.pointerId!==undefined && e.pointerId!==drag.id)) return; this.updateConnections(); drag=null; };
+    el.addEventListener('pointerup',end); el.addEventListener('pointercancel',end); el.addEventListener('lostpointercapture',end);
   }
+
 }

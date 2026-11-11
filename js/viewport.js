@@ -22,8 +22,7 @@ export class CanvasViewport {
     }, { passive: false });
     world.addEventListener('pointerdown', e => {
       const rightButton = e.button === 2;
-      const leftOnEmptyCanvas = e.button === 0 && !e.target.closest('.sound-object') && !e.target.closest('.toolbar');
-      if (!rightButton && !leftOnEmptyCanvas) return;
+      if (!rightButton) return;
       e.preventDefault();
       this.panning = { sx: e.clientX, sy: e.clientY, x: this.x, y: this.y, id: e.pointerId };
       world.setPointerCapture(e.pointerId);
