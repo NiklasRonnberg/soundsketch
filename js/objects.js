@@ -27,6 +27,7 @@ export class ObjectManager {
       event.preventDefault();
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       this.clearSelection();
+      this.imageManager?.clearSelection();
       const rectangle = document.createElement('div'); rectangle.className = 'selection-rectangle'; document.body.appendChild(rectangle);
       marquee = { id:event.pointerId, sx:event.clientX, sy:event.clientY, rectangle };
       world.setPointerCapture(event.pointerId);
@@ -37,6 +38,10 @@ export class ObjectManager {
       const right=Math.max(marquee.sx,event.clientX), bottom=Math.max(marquee.sy,event.clientY);
       Object.assign(marquee.rectangle.style,{left:`${left}px`,top:`${top}px`,width:`${right-left}px`,height:`${bottom-top}px`});
       this.setSelection(this.items.filter(item => { const rect=item.element.getBoundingClientRect(); return rect.right>=left&&rect.left<=right&&rect.bottom>=top&&rect.top<=bottom; }));
+      this.imageManager?.setSelection(this.imageManager.items.filter(image => {
+        const rect=image.element.getBoundingClientRect();
+        return rect.right>=left&&rect.left<=right&&rect.bottom>=top&&rect.top<=bottom;
+      }));
     });
     const end = event => { if (!marquee || (event?.pointerId!==undefined && event.pointerId!==marquee.id)) return; marquee.rectangle.remove(); marquee=null; };
     world.addEventListener('pointerup',end); world.addEventListener('pointercancel',end); world.addEventListener('lostpointercapture',end);
@@ -297,7 +302,11 @@ export class ObjectManager {
       e.stopPropagation();
       if(!this.selectedItems.has(item)) this.setSelection([item]);
       const group=[...this.selectedItems];
-      drag={sx:e.clientX,sy:e.clientY,id:e.pointerId,group,starts:new Map(group.map(candidate=>[candidate,{x:candidate.x,y:candidate.y}]))};
+      const imageGroup=[...(this.imageManager?.selectedItems || [])];
+      drag={sx:e.clientX,sy:e.clientY,id:e.pointerId,group,
+        starts:new Map(group.map(candidate=>[candidate,{x:candidate.x,y:candidate.y}])),
+        imageGroup,
+        imageStarts:new Map(imageGroup.map(image=>[image,{x:image.x,y:image.y}]))};
       el.setPointerCapture(e.pointerId);
     });
     el.addEventListener('pointermove',e=>{
@@ -309,6 +318,7 @@ export class ObjectManager {
       const pos=this.snap.resolve(item,[item,...outside]);
       const appliedX=pos.x-anchorStart.x, appliedY=pos.y-anchorStart.y;
       for(const candidate of drag.group){ const origin=drag.starts.get(candidate); candidate.x=origin.x+appliedX; candidate.y=origin.y+appliedY; this.place(candidate); }
+      for(const image of drag.imageGroup){ const origin=drag.imageStarts.get(image); image.x=origin.x+appliedX; image.y=origin.y+appliedY; this.imageManager.place(image); }
       this.updateConnections();
     });
     const end=e=>{ if(!drag || (e?.pointerId!==undefined && e.pointerId!==drag.id)) return; this.updateConnections(); drag=null; };

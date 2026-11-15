@@ -47,6 +47,8 @@ const images = new ImageManager({
   layer: document.querySelector('#images-layer'), viewport,
   button: document.querySelector('#add-image'), input: document.querySelector('#image-input')
 });
+manager.imageManager = images;
+images.objectManager = manager;
 new SoundSaver(document.querySelector('#save-sounds'), () => manager.items);
 new ObjectClipboard(manager);
 new ProjectExporter(document.querySelector('#export-project'), manager, images, () => projectTitle.textContent.trim() || defaultProjectTitle);
