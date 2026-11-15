@@ -660,3 +660,128 @@ button {
 .record-mode-button { font-size: 20px; }
 .record-mode-button.click-mode { background: linear-gradient(135deg, #ee5578, #e24868); }
 .selection-rectangle { position: fixed; z-index: 900; border: 1px solid #745cff; background: rgba(116,92,255,.12); pointer-events: none; }
+
+/* Independent images inserted with the image toolbar button. */
+#images-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    z-index: 0;
+    pointer-events: none;
+}
+.image-button {
+    display: grid;
+    place-items: center;
+}
+.image-button-icon {
+    width: 25px;
+    height: 25px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+.placed-image {
+    position: absolute;
+    z-index: 0;
+    min-width: 80px;
+    min-height: 60px;
+    pointer-events: auto;
+    touch-action: none;
+    cursor: grab;
+    user-select: none;
+}
+.placed-image.moving { cursor: grabbing; }
+.placed-image > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+}
+.delete-placed-image {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 9px;
+    background: #f4effa;
+    color: #8e819e;
+    font-size: 17px;
+}
+.resize-placed-image {
+    position: absolute;
+    right: -7px;
+    bottom: -7px;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #fff;
+    border-radius: 6px;
+    background: #745cff;
+    cursor: nwse-resize;
+}
+
+/* Current canvas image and signal-tool layers. */
+#objects-layer { isolation: isolate; }
+#images-layer { position:absolute; left:0; top:0; width:1px; height:1px; z-index:0; pointer-events:none; }
+.snap-connection { z-index:1; }
+.sound-object { z-index:2; }
+.image-button { display:grid; place-items:center; }
+.image-button-icon { width:25px; height:25px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; pointer-events:none; }
+.placed-image { --counter-rotation:0deg; position:absolute; z-index:0; min-width:80px; transform-origin:center; pointer-events:auto; touch-action:none; user-select:none; cursor:grab; }
+.placed-image.moving { cursor:grabbing; }
+.placed-image-content { display:block; width:100%; height:100%; object-fit:contain; pointer-events:none; }
+.image-control { position:absolute; z-index:3; width:28px; height:28px; min-width:28px; min-height:28px; padding:0; display:grid; place-items:center; border:2px solid #fff; border-radius:8px; background:#f4effa; color:#665b73; box-shadow:0 3px 10px rgba(65,49,93,.26); line-height:1; touch-action:none; transform:rotate(var(--counter-rotation)); transform-origin:center; }
+.image-control svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; pointer-events:none; }
+.delete-placed-image { left:-14px; top:-14px; font-size:18px; cursor:pointer; }
+.rotate-placed-image { right:-14px; top:-14px; cursor:grab; }
+.resize-placed-image { right:-14px; bottom:-14px; cursor:nwse-resize; }
+.sound-tools-pane { position:absolute; inset:0; z-index:20; padding:14px; display:grid; grid-template-columns:1fr 1fr; align-content:start; gap:9px; border-radius:inherit; background:rgba(247,243,255,.97); }
+.sound-tools-pane[hidden] { display:none !important; }
+.sound-tools-pane button { width:100%; height:30px; min-height:30px; padding:0; border:0; border-radius:9px; color:#fff; background:linear-gradient(135deg,#6557dc,#8666ec); font-size:11px; font-weight:760; }
+.sound-tools-pane .reverb-tools-row,.sound-tools-pane .filter-tools-row { grid-column:1/-1; display:grid; grid-template-columns:repeat(3,1fr); gap:9px; }
+.sound-tools-heading { grid-column:1/-1; margin:2px 0 8px; color:#342d44; font-size:13px; font-weight:780; line-height:1.2; }
+.sound-tools-pane button.tool-active,.sound-tools-pane button.tool-active:hover,.sound-tools-pane button.tool-momentary,.sound-tools-pane button.tool-momentary:hover { background:#342879 !important; box-shadow:inset 0 3px 7px rgba(24,16,72,.55) !important; transform:translateY(2px) !important; }
+
+/* Multi-page instruction dialog. */
+.info-dialog-card { width:min(860px,100%); }
+.info-dialog-header { flex:0 0 auto; }
+.info-dialog-header h2 { margin-bottom:12px; }
+.info-page-links { display:flex; gap:8px; padding-bottom:14px; overflow-x:auto; }
+.info-page-links button { flex:0 0 auto; min-height:34px; padding:0 12px; border:1px solid rgba(105,78,160,.16); border-radius:10px; color:#665b73; background:#f4effa; font-size:11px; font-weight:720; }
+.info-page-links button.active { border-color:transparent; color:#fff; background:linear-gradient(135deg,#6557dc,#8666ec); box-shadow:0 5px 14px rgba(101,87,220,.2); }
+.info-dialog-content { flex:1 1 auto; min-height:0; }
+.info-page[hidden] { display:none; }
+.info-page h3 { margin:2px 0 8px; color:#342d44; font-size:15px; }
+.info-page h3:not(:first-child) { margin-top:20px; }
+.info-dialog-footer { flex:0 0 auto; display:flex; justify-content:flex-end; }
+@media (max-width:620px) { .info-page-links { display:grid; grid-template-columns:1fr 1fr; overflow:visible; } .info-page-links button { white-space:normal; } }
+
+/* Keep the instruction dialog fixed in size and position on every instruction page. */
+.info-dialog-card {
+    width: min(860px, calc(100vw - 44px));
+    height: min(720px, calc(100vh - 44px));
+    max-height: none;
+}
+.info-dialog-content {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+}
+.info-dialog-header,
+.info-dialog-footer {
+    flex: 0 0 auto;
+}
+@media (max-width: 520px) {
+    .info-dialog-card {
+        width: calc(100vw - 24px);
+        height: calc(100vh - 24px);
+        max-height: none;
+    }
+}

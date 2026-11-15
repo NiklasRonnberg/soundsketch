@@ -15,9 +15,11 @@
   <header class="project-title-bar">
     <h1 id="project-title" class="project-title" title="Double-click to rename">Untitled sketch</h1>
   </header>
-  <main id="world" aria-label="Canvas with sound objects"><div id="objects-layer"></div></main>
+  <main id="world" aria-label="Canvas with sound objects"><div id="objects-layer"><div id="images-layer" aria-label="Images"></div></div></main>
   <div class="toolbar">
     <button id="add-object" class="add-button" type="button" aria-label="Add object" title="Add object">+</button>
+      <button id="add-image" class="add-button image-button" type="button" aria-label="Add image" title="Add image"><svg class="image-button-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="M5 17l4.5-4.5 3.5 3 2.5-2.5L19 17"></path></svg></button>
+      <input id="image-input" type="file" accept="image/*" hidden>
     <button id="record-mode" class="add-button record-mode-button" type="button" aria-label="Recording mode: hold" title="Switch to click recording"><span class="record-mode-icon solid-circle" aria-hidden="true"></span></button>
     <button id="mic-permission" class="secondary-button" type="button">Enable microphone</button>
   </div>
@@ -29,30 +31,63 @@
   </div>
 
   <div id="info-dialog" class="info-dialog" role="dialog" aria-modal="true" aria-labelledby="info-dialog-title" hidden>
-    <div class="info-dialog-card">
+  <div class="info-dialog-card">
+    <div class="info-dialog-header">
       <h2 id="info-dialog-title">How to use Sound Sketch</h2>
-      <div class="info-dialog-content">
-        <p>The microphone must be activated before sounds can be recorded. Click <strong>Enable microphone</strong> and allow microphone access in the browser. Alternatively, an existing audio file can be dragged and dropped directly onto an object’s recording button.</p>
-        <p>The canvas can be zoomed in and out using the mouse wheel. <strong>Right-click and drag</strong> to move around the canvas and focus on different parts of the workspace. <strong>Left-click and drag on empty canvas</strong> to draw a selection rectangle around multiple sound objects. Dragging any selected object moves the complete selection while preserving the objects’ relative positions. Clicking on empty canvas outside the selected objects deselects them. Clicking the <strong>+</strong> button adds a new object.</p>
-        <p>Each object contains a title, an annotation, and a sound. The title can be edited by clicking the title field and entering a new name. The annotation can contain text, an image, or both. Images can be dragged into an object either from the computer or from another browser window. When an image has been added, it covers the text annotation, but the annotation is displayed when hovering over the image. <strong>Double-click the image</strong> to edit the text annotation.</p>
-        <p>The recording-mode button between <strong>+</strong> and <strong>Enable microphone</strong> selects how recording starts and stops. A <strong>solid circle</strong> means hold-to-record mode: press and hold <strong>Hold to record or drop audio file</strong>, then release it to stop recording. A <strong>dotted circle</strong> means click-to-record mode: click <strong>Click to start recording or drop audio file</strong> once to start recording; the button changes to <strong>Stop recording</strong>, and clicking it again stops the recording. An existing audio file can be dragged directly onto the recording button in either mode. Once audio has been recorded or added, the button changes to <strong>Play</strong>, and the duration of the sound is displayed. The <strong>×</strong> button in the upper-right corner of an object deletes it.</p>
-        <p>Objects can be moved freely around the canvas. When two objects are brought close together, the object being moved snaps to the other object. Snapped objects are visually connected.</p>
-        <p>When objects are snapped horizontally, their sounds are played sequentially from left to right. Pressing <strong>Play</strong> on any object in the connected group plays the complete sequence. A sequence can contain as many objects as needed.</p>
-        <p>When objects are snapped vertically, their sounds are mixed and played simultaneously. Any number of sounds can be combined in this way. Vertical mixing and horizontal sequencing can also be combined. When a vertical group is followed by another object or group to its right, the next sound starts after the longest sound in the preceding vertical group has finished. Moving an object away from a connected group disconnects it and makes it a stand-alone object again.</p>
-        <p>The <strong>Export sketch</strong> button saves the complete sketch as a ZIP file, including the sketch title, sound objects, sounds, images, annotations, and their placements. Use <strong>Import sketch</strong> to reopen an exported sketch by selecting its ZIP file or dragging the ZIP file directly onto the button.</p>
-        <p>The <strong>Save sounds</strong> button in the lower-right corner exports the work. For each stand-alone object or connected group, two files are downloaded:</p>
-        <ul>
-          <li>a WAV file containing the sequenced and/or mixed audio;</li>
-          <li>a TXT file containing the object titles, annotations, and the filenames of any images that have been added.</li>
-        </ul>
-        <p>The audio and text files use the title of the upper-left object in the group as their filename. If several independent objects or groups exist on the canvas, a separate WAV and TXT file is created for each. The browser may ask for permission to download multiple files, which must be allowed for all files to be saved.</p>
-        <p>The TXT file follows the same structure as the sound arrangement. Sequential sections are numbered, while annotations belonging to sounds that are mixed in parallel are separated by <strong>“Mixed with”</strong>.</p>
-      </div>
-      <button id="info-close" class="info-close" type="button">Close</button>
+      <nav class="info-page-links" aria-label="Instruction pages">
+        <button type="button" data-info-page="basics" class="active">Basics</button>
+        <button type="button" data-info-page="files">Save, import and export</button>
+        <button type="button" data-info-page="backgrounds">Background images</button>
+        <button type="button" data-info-page="signal-tools">Signal tools</button>
+      </nav>
     </div>
+    <div class="info-dialog-content">
+      <section class="info-page active" data-info-content="basics">
+        <h3>Sound objects and recording</h3>
+        <p>Click <strong>+</strong> to create a sound object. Give it a title, write an annotation, and use the <strong>×</strong> button in its upper-right corner to delete it.</p>
+        <p>Click <strong>Enable microphone</strong> before recording. A <strong>solid circle</strong> selects hold-to-record; a <strong>dotted circle</strong> selects click once to start and again to stop. An audio file can also be dropped onto the recording button.</p>
+        <p>When audio is ready, the button changes to <strong>Play</strong> and its duration is displayed. Drop an image into the annotation area. Double-click the image to edit the text annotation.</p>
+        <h3>Canvas and selection</h3>
+        <p>Use the mouse wheel to zoom and <strong>right-click and drag</strong> to pan. <strong>Left-click and drag on empty canvas</strong> to select several sound objects. Moving one selected object moves the selection. Copy and paste can duplicate selected sound objects.</p>
+        <h3>Sequencing and mixing</h3>
+        <p>Move sound objects close together to snap them. Horizontally snapped objects play sequentially from left to right. Press <strong>Play</strong> on any object to play the complete group.</p>
+        <p>Vertically snapped objects can overlap in time. Their horizontal offset within the vertical connection determines when they start relative to one another, so they can be layered and mixed. Horizontal sequencing and vertical layering can be combined. Move an object away to disconnect it.</p>
+      </section>
+      <section class="info-page" data-info-content="files" hidden>
+        <h3>Save sounds</h3>
+        <p><strong>Save sounds</strong> renders each stand-alone sound object or connected group that contains audio as a WAV file, plus a TXT file containing its titles, annotations, and object-image filenames.</p>
+        <p>Files use the title of the upper-left object. Separate groups create separate files. Sequential TXT sections are numbered and simultaneous sounds are separated by <strong>Mixed with</strong>.</p>
+        <h3>Export and import a sketch</h3>
+        <p><strong>Export sketch</strong> saves the editable sketch as a ZIP file, including its title, sound objects, processed sounds, annotations, object images, and object positions.</p>
+        <p><strong>Import sketch</strong> opens an exported ZIP file. Select it or drag it onto the button. Import replaces the current sketch.</p>
+      </section>
+      <section class="info-page" data-info-content="backgrounds" hidden>
+        <h3>Background images</h3>
+        <p>Click the picture button or drag an image file onto empty canvas space. Multiple images can be used, and they remain behind sound objects and snap markers.</p>
+        <p>Drag the image to move it. Use the <strong>bottom-right handle</strong> to resize proportionally, the <strong>top-right handle</strong> to rotate, and the <strong>×</strong> in the top-left corner to delete.</p>
+        <p>Background images are currently canvas-only and are not included in sketch export/import.</p>
+      </section>
+      <section class="info-page" data-info-content="signal-tools" hidden>
+        <h3>Opening Signal tools</h3>
+        <p>Double-click a sound object outside editable fields to open <strong>Signal tools</strong>. Opening it stops playback. Double-click the pane outside its buttons to close it.</p>
+        <p>Active effects appear pressed. Click an active button again to remove it. Duration is recalculated after trimming or adding and removing reverberation.</p>
+        <h3>Available processing</h3>
+        <ul>
+          <li><strong>-3dB / +3dB:</strong> decrease or increase the sound level by 3 dB.</li>
+          <li><strong>Trim start / Trim end:</strong> remove silence from the beginning or the end of a sound.</li>
+          <li><strong>Reverse:</strong> play the sound backwards.</li>
+          <li><strong>Random:</strong> randomize the playback order of sections of the sound.</li>
+          <li><strong>Room / Hall / Church:</strong> add reverberation with different room sizes. Several reverbs can be combined.</li>
+          <li><strong>Robot / Metal:</strong> apply different metallic modulation effects. Robot uses a triangle-wave ring modulation, while Metal combines several faster modulations with bright noise.</li>
+          <li><strong>LPF / BPF / HPF:</strong> apply low-pass, band-pass, or high-pass filtering to emphasize different frequency ranges.</li>
+        </ul>
+        <p>Processed audio is used for playback, saving, and sketch export.</p>
+      </section>
+    </div>
+    <div class="info-dialog-footer"><button id="info-close" class="info-close" type="button">Close</button></div>
   </div>
-
-  <div id="mic-warning" class="mic-warning" role="dialog" aria-modal="true" aria-labelledby="mic-warning-title" hidden>
+</div>
+<div id="mic-warning" class="mic-warning" role="dialog" aria-modal="true" aria-labelledby="mic-warning-title" hidden>
     <div class="mic-warning-card">
       <div class="mic-warning-icon">●</div>
       <h2 id="mic-warning-title">Microphone not enabled</h2>
