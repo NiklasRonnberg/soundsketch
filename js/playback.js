@@ -1,5 +1,17 @@
 export class PlaybackGraph {
-  constructor(setStatus) { this.setStatus = setStatus; this.playing = false; }
+  constructor(setStatus) { this.setStatus = setStatus; this.playing = false; this.stopGeneration = 0; }
+  stopAll(items = []) {
+    this.stopGeneration++;
+    this.playing = false;
+    for (const item of items) {
+      if (item.activeAudio) {
+        try { item.activeAudio.pause(); item.activeAudio.currentTime = 0; } catch {}
+        item.activeAudio = null;
+      }
+      item.recordButton?.classList.remove('playing-now');
+      item.recordButton?.removeAttribute('aria-pressed');
+    }
+  }
 
   connectionEdges(items, durationOf) {
     const edges = [];

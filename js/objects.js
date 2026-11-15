@@ -13,7 +13,7 @@ export class ObjectManager {
   }
   updateRecordLabel(item) {
     if (item.recordButton.classList.contains('playback') || item.recorder?.state === 'recording') return;
-    item.recordLabel.textContent = this.recordingMode === 'click' ? 'Click to start recording or drop audio file' : 'Hold to record or drop audio file';
+    item.recordLabel.textContent = this.recordingMode === 'click' ? 'Click to record or drop audio file' : 'Hold to record or drop audio file';
   }
   setSelection(items) {
     this.selectedItems = new Set(items);
