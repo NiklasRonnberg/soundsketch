@@ -785,3 +785,7 @@ button {
         max-height: none;
     }
 }
+
+
+/* Selected canvas images. */
+.placed-image.selected { outline:3px solid rgba(116,92,255,.78); outline-offset:4px; box-shadow:0 0 0 7px rgba(116,92,255,.12); }
