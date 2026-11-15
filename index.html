@@ -52,20 +52,21 @@
         <h3>Sequencing and mixing</h3>
         <p>Move sound objects close together to snap them. Horizontally snapped objects play sequentially from left to right. Press <strong>Play</strong> on any object to play the complete group.</p>
         <p>Vertically snapped objects can overlap in time. Their horizontal offset within the vertical connection determines when they start relative to one another, so they can be layered and mixed. Horizontal sequencing and vertical layering can be combined. Move an object away to disconnect it.</p>
+        <p>Recording follows the arrangement of connected sound objects. When recording into an object in a horizontal sequence, preceding sounds can play before recording starts and following sounds can continue after recording ends. Vertically connected sounds can play while recording, making it possible to record in context.</p>
       </section>
       <section class="info-page" data-info-content="files" hidden>
         <h3>Save sounds</h3>
         <p><strong>Save sounds</strong> renders each stand-alone sound object or connected group that contains audio as a WAV file, plus a TXT file containing its titles, annotations, and object-image filenames.</p>
         <p>Files use the title of the upper-left object. Separate groups create separate files. Sequential TXT sections are numbered and simultaneous sounds are separated by <strong>Mixed with</strong>.</p>
         <h3>Export and import a sketch</h3>
-        <p><strong>Export sketch</strong> saves the editable sketch as a ZIP file, including its title, sound objects, processed sounds, annotations, object images, and object positions.</p>
-        <p><strong>Import sketch</strong> opens an exported ZIP file. Select it or drag it onto the button. Import replaces the current sketch.</p>
+        <p><strong>Export sketch</strong> saves the complete editable sketch as a ZIP file, including its title, sound objects, processed and source audio, active Signal tools, annotations, object images, background images, and their positions, sizes, and rotations.</p>
+        <p><strong>Import sketch</strong> restores an exported sketch, including active Signal tools and background images. Select the ZIP file or drag it onto the button. Import replaces the current sketch.</p>
       </section>
       <section class="info-page" data-info-content="backgrounds" hidden>
         <h3>Background images</h3>
-        <p>Click the picture button or drag an image file onto empty canvas space. Multiple images can be used, and they remain behind sound objects and snap markers.</p>
+        <p>Click the picture button to select an image, drag an image file from the computer onto empty canvas space, or drag an image directly from another browser window. Multiple background images can be used, and they remain behind sound objects and snap markers. An image dropped onto a sound object becomes that object’s annotation image instead.</p>
         <p>Drag the image to move it. Use the <strong>bottom-right handle</strong> to resize proportionally, the <strong>top-right handle</strong> to rotate, and the <strong>×</strong> in the top-left corner to delete.</p>
-        <p>Background images are currently canvas-only and are not included in sketch export/import.</p>
+        <p>Background images, including their files, positions, proportional sizes, and rotations, are preserved when exporting and importing a sketch.</p>
       </section>
       <section class="info-page" data-info-content="signal-tools" hidden>
         <h3>Opening Signal tools</h3>
