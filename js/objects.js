@@ -47,8 +47,6 @@ export class ObjectManager {
     world.addEventListener('pointerup',end); world.addEventListener('pointercancel',end); world.addEventListener('lostpointercapture',end);
   }
   add(opts = {}) {
-    // Explicit positions are used by imports/paste. New objects get a clear free position instead of
-    // being created on top of an existing object's interactive image/content area.
     let x = opts.x;
     let y = opts.y;
     if (x == null || y == null) {
@@ -215,14 +213,8 @@ export class ObjectManager {
   setupAudioDrop(item) {
     const button = item.recordButton;
     const clearDragState = () => button.classList.remove('audio-drag-over');
-    button.addEventListener('dragenter', e => {
-      e.preventDefault(); e.stopPropagation();
-      if (!button.classList.contains('playback')) button.classList.add('audio-drag-over');
-    });
-    button.addEventListener('dragover', e => {
-      e.preventDefault(); e.stopPropagation();
-      if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
-    });
+    button.addEventListener('dragenter', e => { e.preventDefault(); e.stopPropagation(); if (!button.classList.contains('playback')) button.classList.add('audio-drag-over'); });
+    button.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; });
     button.addEventListener('dragleave', e => { e.preventDefault(); e.stopPropagation(); clearDragState(); });
     button.addEventListener('drop', e => {
       e.preventDefault(); e.stopPropagation(); clearDragState();
@@ -230,17 +222,9 @@ export class ObjectManager {
       if (!file) return;
       if (item.activeAudio) { item.activeAudio.pause(); item.activeAudio = null; }
       if (item.audioUrl) URL.revokeObjectURL(item.audioUrl);
-      item.audioBlob = file;
-      item.audioUrl = URL.createObjectURL(file);
-      const probe = document.createElement('audio');
-      probe.preload = 'metadata';
-      probe.src = item.audioUrl;
-      const finish = duration => {
-        item.audioDuration = Number.isFinite(duration) ? duration : 0;
-        item.onAudioReady?.();
-        probe.removeAttribute('src');
-        probe.load();
-      };
+      item.audioBlob = file; item.audioUrl = URL.createObjectURL(file);
+      const probe = document.createElement('audio'); probe.preload = 'metadata'; probe.src = item.audioUrl;
+      const finish = duration => { item.audioDuration = Number.isFinite(duration) ? duration : 0; item.onAudioReady?.(); probe.removeAttribute('src'); probe.load(); };
       probe.addEventListener('loadedmetadata', () => finish(probe.duration), { once: true });
       probe.addEventListener('error', () => finish(0), { once: true });
     });
@@ -248,62 +232,39 @@ export class ObjectManager {
   setupImageDrop(item) {
     const displayImage = (src, isObjectUrl = false) => {
       if (item.imageIsObjectUrl && item.imageUrl) URL.revokeObjectURL(item.imageUrl);
-      item.imageUrl = src;
-      item.imageIsObjectUrl = isObjectUrl;
-      item.image.onload = () => {
-        item.image.hidden = false;
-        item.imageTextOverlay.textContent = item.descriptionInput.value;
-        item.content.classList.add('has-image');
-      };
+      item.imageUrl = src; item.imageIsObjectUrl = isObjectUrl;
+      item.image.onload = () => { item.image.hidden = false; item.imageTextOverlay.textContent = item.descriptionInput.value; item.content.classList.add('has-image'); };
       item.image.src = src;
     };
-    item.content.addEventListener('dragover', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      item.content.classList.add('drag-over');
-      if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
-    });
+    item.content.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); item.content.classList.add('drag-over'); if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; });
     item.content.addEventListener('dragleave', () => item.content.classList.remove('drag-over'));
     item.content.addEventListener('drop', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      item.content.classList.remove('drag-over');
+      e.preventDefault(); e.stopPropagation(); item.content.classList.remove('drag-over');
       const transfer = e.dataTransfer;
       const file = [...(transfer?.files || [])].find(f => f.type.startsWith('image/'));
-      if (file) {
-        item.imageFileName = file.name;
-        displayImage(URL.createObjectURL(file), true);
-        return;
-      }
+      if (file) { item.imageFileName = file.name; displayImage(URL.createObjectURL(file), true); return; }
       const html = transfer?.getData('text/html') || '';
       if (html) {
         const parsed = new DOMParser().parseFromString(html, 'text/html');
         const draggedImage = parsed.querySelector('img');
-        if (draggedImage?.src) {
-          try { item.imageFileName = decodeURIComponent(new URL(draggedImage.src).pathname.split('/').pop() || '') || 'browser-image'; } catch { item.imageFileName = 'browser-image'; }
-          displayImage(draggedImage.src);
-          return;
-        }
+        if (draggedImage?.src) { try { item.imageFileName = decodeURIComponent(new URL(draggedImage.src).pathname.split('/').pop() || '') || 'browser-image'; } catch { item.imageFileName = 'browser-image'; } displayImage(draggedImage.src); return; }
       }
       const uriList = transfer?.getData('text/uri-list') || '';
       const imageUrl = uriList.split(/\r?\n/).find(line => line && !line.startsWith('#'));
-      if (imageUrl) {
-        try { item.imageFileName = decodeURIComponent(new URL(imageUrl.trim()).pathname.split('/').pop() || '') || 'browser-image'; } catch { item.imageFileName = 'browser-image'; }
-        displayImage(imageUrl.trim());
-        return;
-      }
+      if (imageUrl) { try { item.imageFileName = decodeURIComponent(new URL(imageUrl.trim()).pathname.split('/').pop() || '') || 'browser-image'; } catch { item.imageFileName = 'browser-image'; } displayImage(imageUrl.trim()); return; }
       this.setStatus('Drop an image file or drag an image from another browser window.');
     });
   }
   setupDrag(item) {
     const el=item.element; let drag=null;
+    const DRAG_THRESHOLD = 4;
     el.addEventListener('pointerdown',e=>{
       if(e.button!==0 || e.target.closest('input, textarea, button, .image-preview, .object-content')) return;
       e.stopPropagation();
       if(!this.selectedItems.has(item)) this.setSelection([item]);
       const group=[...this.selectedItems];
       const imageGroup=[...(this.imageManager?.selectedItems || [])];
-      drag={sx:e.clientX,sy:e.clientY,id:e.pointerId,group,
+      drag={sx:e.clientX,sy:e.clientY,id:e.pointerId,started:false,group,
         starts:new Map(group.map(candidate=>[candidate,{x:candidate.x,y:candidate.y}])),
         imageGroup,
         imageStarts:new Map(imageGroup.map(image=>[image,{x:image.x,y:image.y}]))};
@@ -311,7 +272,12 @@ export class ObjectManager {
     });
     el.addEventListener('pointermove',e=>{
       if(!drag || e.pointerId!==drag.id) return;
-      const dx=(e.clientX-drag.sx)/this.viewport.scale, dy=(e.clientY-drag.sy)/this.viewport.scale;
+      const screenDx=e.clientX-drag.sx, screenDy=e.clientY-drag.sy;
+      if(!drag.started){
+        if(Math.hypot(screenDx,screenDy)<DRAG_THRESHOLD) return;
+        drag.started=true;
+      }
+      const dx=screenDx/this.viewport.scale, dy=screenDy/this.viewport.scale;
       const anchorStart=drag.starts.get(item);
       item.x=anchorStart.x+dx; item.y=anchorStart.y+dy;
       const outside=this.items.filter(candidate=>!drag.group.includes(candidate));
@@ -321,8 +287,7 @@ export class ObjectManager {
       for(const image of drag.imageGroup){ const origin=drag.imageStarts.get(image); image.x=origin.x+appliedX; image.y=origin.y+appliedY; this.imageManager.place(image); }
       this.updateConnections();
     });
-    const end=e=>{ if(!drag || (e?.pointerId!==undefined && e.pointerId!==drag.id)) return; this.updateConnections(); drag=null; };
+    const end=e=>{ if(!drag || (e?.pointerId!==undefined && e.pointerId!==drag.id)) return; if(drag.started) this.updateConnections(); drag=null; };
     el.addEventListener('pointerup',end); el.addEventListener('pointercancel',end); el.addEventListener('lostpointercapture',end);
   }
-
 }
