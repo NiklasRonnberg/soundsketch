@@ -49,20 +49,50 @@ export class SignalTools {
       this.resetForNewSource(item);
     };
 
+    let closeTimer = null;
+
+    const openPane = () => {
+      clearTimeout(closeTimer);
+      pane.hidden = false;
+      pane.classList.remove('closing');
+      item.element.classList.add('tools-open');
+      item.element.classList.remove('tools-closing');
+      pane.getBoundingClientRect();
+      requestAnimationFrame(() => pane.classList.add('open'));
+    };
+
+    const closePane = () => {
+      if (pane.hidden || pane.classList.contains('closing')) return;
+      pane.classList.remove('open');
+      pane.classList.add('closing');
+      item.element.classList.remove('tools-open');
+      item.element.classList.add('tools-closing');
+      closeTimer = setTimeout(() => {
+        pane.hidden = true;
+        pane.classList.remove('closing');
+        item.element.classList.remove('tools-closing');
+      }, 230);
+    };
+
     item.element.addEventListener('dblclick', event => {
       if (event.target.closest('input, textarea, button, .object-content, .sound-tools-pane')) return;
       event.preventDefault();
       event.stopPropagation();
+      if (!pane.hidden && pane.classList.contains('open')) {
+        closePane();
+        return;
+      }
       this.manager.playback.stopAll(this.manager.items);
-      pane.hidden = false;
+      openPane();
     });
 
     pane.addEventListener('pointerdown', event => event.stopPropagation());
+
     pane.addEventListener('dblclick', event => {
       if (event.target.closest('button')) return;
       event.preventDefault();
       event.stopPropagation();
-      pane.hidden = true;
+      closePane();
     });
 
     pane.querySelectorAll('button').forEach(button => {
