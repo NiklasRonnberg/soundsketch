@@ -38,6 +38,8 @@ export class SignalTools {
           <button type="button" data-filter="bpf">BPF</button>
           <button type="button" data-filter="hpf">HPF</button>
         </div>
+      <button type="button" data-speed="0.8">-25% speed</button>
+      <button type="button" data-speed="1.25">+25% speed</button>
 `;
     item.toolsPane = pane;
     item.element.appendChild(pane);
@@ -104,6 +106,11 @@ export class SignalTools {
           await this.applyPermanentGain(item, Number(button.dataset.gain));
           return;
         }
+        if (button.dataset.speed) {
+          this.showMomentaryFeedback(button);
+          await this.applyPermanentSpeed(item, Number(button.dataset.speed));
+          return;
+        }
         const key = this.effectKey(button);
         if (!key) return;
         if (item.signalToolsState.active.has(key)) {
@@ -164,6 +171,38 @@ export class SignalTools {
       await context.close();
       item.signalToolsState.originalBlob = this.toWave(buffer, Math.pow(10, gainDb / 20));
     } finally { item.processingGain = false; }
+    await this.rebuildActiveEffects(item);
+  }
+
+  async applyPermanentSpeed(item, speedFactor) {
+    if (item.processingGain || !Number.isFinite(speedFactor) || speedFactor <= 0) return;
+    const originalBlob = await this.ensureOriginalBlob(item);
+    if (!originalBlob) return;
+    item.processingGain = true;
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const context = new AudioContextClass();
+      const buffer = await context.decodeAudioData(await originalBlob.arrayBuffer());
+      await context.close();
+      const channels = Math.min(2, buffer.numberOfChannels);
+      const outputLength = Math.max(1, Math.round(buffer.length / speedFactor));
+      const output = Array.from({ length: channels }, () => new Float32Array(outputLength));
+      for (let channel = 0; channel < channels; channel++) {
+        const source = buffer.getChannelData(channel);
+        for (let sample = 0; sample < outputLength; sample++) {
+          const sourcePosition = sample * speedFactor;
+          const left = Math.min(buffer.length - 1, Math.floor(sourcePosition));
+          const right = Math.min(buffer.length - 1, left + 1);
+          const fraction = sourcePosition - left;
+          output[channel][sample] = source[left] + (source[right] - source[left]) * fraction;
+        }
+      }
+      item.signalToolsState.originalBlob = this.channelsToWave(output, buffer.sampleRate);
+    } catch (error) {
+      console.error('Could not change playback speed.', error);
+    } finally {
+      item.processingGain = false;
+    }
     await this.rebuildActiveEffects(item);
   }
 
